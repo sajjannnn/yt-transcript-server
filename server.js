@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { YouTubeTranscriptApi } = require("yt-transcript-api");
+const { YouTubeTranscriptApi,GenericProxyConfig  } = require("yt-transcript-api");
 
 const app = express();
 
@@ -13,8 +13,8 @@ const PORT = 3000;
 app.get("/captions/:videoId", async (req, res) => {
   try {
     const { videoId } = req.params;
-
-    const api = new YouTubeTranscriptApi();
+const proxyConfig = new GenericProxyConfig("http://proxy:8080");
+    const api = new YouTubeTranscriptApi({ proxy: proxyConfig });
 
     const transcript = await api.fetch(videoId, ["en", "hi"]);
 
