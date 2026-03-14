@@ -13,7 +13,7 @@ const PORT = 3000;
 app.get("/captions/:videoId", async (req, res) => {
   try {
     const { videoId } = req.params;
-const proxyConfig = new GenericProxyConfig("http://proxy:8080");
+const proxyConfig = new GenericProxyConfig("http://103.152.112.162:80");
     const api = new YouTubeTranscriptApi({ proxy: proxyConfig });
 
     const transcript = await api.fetch(videoId, ["en", "hi"]);
