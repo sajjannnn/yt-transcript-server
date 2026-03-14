@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { YouTubeTranscriptApi,GenericProxyConfig  } = require("yt-transcript-api");
+const { YouTubeTranscriptApi, GenericProxyConfig } = require("yt-transcript-api");
 
 const app = express();
 
@@ -9,46 +9,44 @@ app.use(express.json());
 
 const PORT = 3000;
 
+const proxyConfig = new GenericProxyConfig("http://219.65.73.81:80");
+const api = new YouTubeTranscriptApi({ proxy: proxyConfig });
 
 app.get("/captions/:videoId", async (req, res) => {
   try {
     const { videoId } = req.params;
-const proxyConfig = new GenericProxyConfig("http://103.152.112.162:80");
-    const api = new YouTubeTranscriptApi({ proxy: proxyConfig });
 
     const transcript = await api.fetch(videoId, ["en", "hi"]);
 
-   let currentMinute = 0;
-let block = [];
-const result = [];
+    let currentMinute = 0;
+    let block = [];
+    const result = [];
 
-for (const item of transcript) {
+    for (const item of transcript) {
+      if (item.start < (currentMinute + 1) * 60) {
+        block.push(item.text);
+      } else {
+        result.push({
+          minute: currentMinute,
+          text: block.join(" "),
+        });
 
-  if (item.start < (currentMinute + 1) * 60) {
-    block.push(item.text);
-  } else {
+        block = [item.text];
+        currentMinute++;
+      }
+    }
 
-    result.push({
-      minute: currentMinute,
-      text: block.join(" ")
-    });
+    if (block.length > 0) {
+      result.push({
+        minute: currentMinute,
+        text: block.join(" "),
+      });
+    }
 
-    block = [item.text];
-    currentMinute++;
-  }
-}
-
-if (block.length > 0) {
-  result.push({
-    minute: currentMinute,
-    text: block.join(" ")
-  });
-}
-
-res.json(result);
+    res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to fetch transcript" });
+    res.status(500).json({ error: error.message });
   }
 });
 app.listen(PORT, () => {
