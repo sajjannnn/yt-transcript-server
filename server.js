@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { YouTubeTranscriptApi, GenericProxyConfig } = require("yt-transcript-api");
+const axios = require("axios");
 
 const app = express();
 
@@ -9,21 +9,36 @@ app.use(express.json());
 
 const PORT = 3000;
 
-const proxyConfig = new GenericProxyConfig("http://219.65.73.81:80");
-const api = new YouTubeTranscriptApi({ proxy: proxyConfig });
+const SUPADATA_API_KEY = process.env.SUPADATA_API_KEY || "YOUR_API_KEY";
+
+async function getTranscript(videoId) {
+  const response = await axios.get(
+    `https://api.supadata.ai/v1/transcript?url=https://youtu.be/${videoId}`,
+    {
+      headers: {
+        "x-api-key": SUPADATA_API_KEY,
+      },
+      timeout: 30000,
+    }
+  );
+  
+  return response.data.content;
+}
 
 app.get("/captions/:videoId", async (req, res) => {
   try {
     const { videoId } = req.params;
 
-    const transcript = await api.fetch(videoId, ["en", "hi"]);
+    const transcript = await getTranscript(videoId);
 
     let currentMinute = 0;
     let block = [];
     const result = [];
 
     for (const item of transcript) {
-      if (item.start < (currentMinute + 1) * 60) {
+      const itemMinute = Math.floor(item.offset / 60000);
+      
+      if (itemMinute === currentMinute) {
         block.push(item.text);
       } else {
         result.push({
@@ -32,7 +47,7 @@ app.get("/captions/:videoId", async (req, res) => {
         });
 
         block = [item.text];
-        currentMinute++;
+        currentMinute = itemMinute;
       }
     }
 
