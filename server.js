@@ -31,34 +31,34 @@ app.get("/captions/:videoId", async (req, res) => {
 
     const transcript = await getTranscript(videoId);
 
-    // let currentMinute = 0;
-    // let block = [];
-    // const result = [];
+    let currentMinute = 0;
+    let block = [];
+    const result = [];
 
-    // for (const item of transcript) {
-    //   const itemMinute = Math.floor(item.offset / 60000);
+    for (const item of transcript) {
+      const itemMinute = Math.floor(item.offset / 60000);
       
-    //   if (itemMinute === currentMinute) {
-    //     block.push(item.text);
-    //   } else {
-    //     result.push({
-    //       minute: currentMinute,
-    //       text: block.join(" "),
-    //     });
+      if (itemMinute === currentMinute) {
+        block.push(item.text);
+      } else {
+        result.push({
+          minute: currentMinute,
+          text: block.join(" "),
+        });
 
-    //     block = [item.text];
-    //     currentMinute = itemMinute;
-    //   }
-    // }
+        block = [item.text];
+        currentMinute = itemMinute;
+      }
+    }
 
-    // if (block.length > 0) {
-    //   result.push({
-    //     minute: currentMinute,
-    //     text: block.join(" "),
-    //   });
-    // }
+    if (block.length > 0) {
+      result.push({
+        minute: currentMinute,
+        text: block.join(" "),
+      });
+    }
 
-    res.json(transcript);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
